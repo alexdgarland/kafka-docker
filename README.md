@@ -7,6 +7,8 @@
 kafka-docker
 ============
 
+_My fork to experiment with some basic JVM clients..._
+
 Dockerfile for [Apache Kafka](http://kafka.apache.org/)
 
 The image is available directly from [Docker Hub](https://hub.docker.com/r/wurstmeister/kafka/)
