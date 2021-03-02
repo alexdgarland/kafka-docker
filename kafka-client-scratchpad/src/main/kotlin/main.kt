@@ -6,16 +6,16 @@ import java.util.Properties
 import org.apache.kafka.clients.consumer.KafkaConsumer
 
 const val TOPIC = "test"
+const val CONSUMER_GROUP = "${TOPIC}_group"
+
 const val BOOTSTRAP_SERVER = "localhost:9092"
 const val SERIALIZATION_LIB = "org.apache.kafka.common.serialization"
-const val STRING_SERIALIZER = "$SERIALIZATION_LIB.StringSerializer"
-const val STRING_DESERIALIZER = "$SERIALIZATION_LIB.StringDeserializer"
 
 val producerProperties = run {
     val properties = Properties()
     properties["bootstrap.servers"] = BOOTSTRAP_SERVER
-    properties["key.serializer"] = STRING_SERIALIZER
-    properties["value.serializer"] = STRING_SERIALIZER
+    properties["key.serializer"] = "$SERIALIZATION_LIB.StringSerializer"
+    properties["value.serializer"] = "MyDataSerializer"
     properties["acks"] = "all"
     properties["retries"] = 0
     properties["batch.size"] = 16384
@@ -28,27 +28,28 @@ val producerProperties = run {
 val consumerProperties = run {
     val properties = Properties()
     properties["bootstrap.servers"] = BOOTSTRAP_SERVER
-    properties["key.deserializer"] = STRING_DESERIALIZER
-    properties["value.deserializer"] = STRING_DESERIALIZER
-    properties["group.id"] = "testgroup"
+    properties["key.deserializer"] = "$SERIALIZATION_LIB.StringDeserializer"
+    properties["value.deserializer"] = "MyDataDeserializer"
+    properties["group.id"] = CONSUMER_GROUP
     properties["enable.auto.commit"] = "true"
     properties["auto.commit.interval.ms"] = "1000"
     properties["session.timeout.ms"] = "30000"
+    properties["auto.offset.reset"] = "earliest"
     properties
 }
 
 fun main(args: Array<String>) {
 
-    val producer: Producer<String, String> = KafkaProducer(producerProperties)
+    val producer: Producer<String, MyData> = KafkaProducer(producerProperties)
 
     for (i in 0..99) {
-        val producerRecord = ProducerRecord(TOPIC, Integer.toString(i), Integer.toString(i))
+        val producerRecord = ProducerRecord(TOPIC, Integer.toString(i), MyData(i))
         println("Created record for producer - $producerRecord")
         producer.send(producerRecord)
     }
     producer.close()
 
-    val consumer = KafkaConsumer<String, String>(consumerProperties)
+    val consumer = KafkaConsumer<String, MyData>(consumerProperties)
 
     println("Subscribing to topic $TOPIC")
     consumer.subscribe(listOf(TOPIC))
